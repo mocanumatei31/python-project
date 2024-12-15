@@ -1,21 +1,30 @@
 import pygame
 import pieces
+import socket
+import pickle
+
+HOST = '127.0.0.1'
+PORT = 8080
 
 colours = dict()
 colours['white'] = (255, 255, 255)
 colours['blue'] = (150, 190, 210)
 
+player_values = ['white', 'black']
+
 
 class GameInstance:
-    def __init__(self, screen_width):
+    def __init__(self, screen_width, player_color):
         """
         Initializes a Game Instance object
 
         Args:
             screen_width (int): The size of the screen (height is assumed equal to width due to square board)
+            player_color (str): Color assigned to the player (black or white)
         """
         pygame.init()
         self.screen_width = screen_width
+        self.player_color = player_color
         self.screen_height = screen_width
         self.square_size = screen_width / 8
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -41,26 +50,26 @@ class GameInstance:
         for row in range(9):
             for col in range(9):
                 if 0 < row <= 2:
-                    color = 'black'
-                    image_path = 'b'
+                    color = [x for x in player_values if x != self.player_color][0]
+                    image_path = color[0]
                 elif row > 6:
-                    color = 'white'
-                    image_path = 'w'
+                    color = self.player_color
+                    image_path = color[0]
                 else:
                     color = None
                 if row == 1 or row == 8:
                     if col == 1 or col == 8:
-                        self.board_state[row][col] = pieces.Rook(color, f"assets/{image_path}r.png", (row, col))
+                        self.board_state[row][col] = pieces.Rook(color, f"assets/{image_path}r.png", (row, col), self.player_color)
                     elif col == 2 or col == 7:
-                        self.board_state[row][col] = pieces.Knight(color, f"assets/{image_path}n.png", (row, col))
+                        self.board_state[row][col] = pieces.Knight(color, f"assets/{image_path}n.png", (row, col), self.player_color)
                     elif col == 3 or col == 6:
-                        self.board_state[row][col] = pieces.Bishop(color, f"assets/{image_path}b.png", (row, col))
+                        self.board_state[row][col] = pieces.Bishop(color, f"assets/{image_path}b.png", (row, col), self.player_color)
                     elif col == 4:
-                        self.board_state[row][col] = pieces.Queen(color, f"assets/{image_path}q.png", (row, col))
+                        self.board_state[row][col] = pieces.Queen(color, f"assets/{image_path}q.png", (row, col), self.player_color)
                     else:
-                        self.board_state[row][col] = pieces.King(color, f"assets/{image_path}k.png", (row, col))
+                        self.board_state[row][col] = pieces.King(color, f"assets/{image_path}k.png", (row, col), self.player_color)
                 elif row == 2 or row == 7:
-                    self.board_state[row][col] = pieces.Pawn(color, f"assets/{image_path}p.png", (row, col))
+                    self.board_state[row][col] = pieces.Pawn(color, f"assets/{image_path}p.png", (row, col), self.player_color)
 
     def draw_chessboard(self):
         """
@@ -69,7 +78,7 @@ class GameInstance:
         self.screen.fill(colours['white'])
         for row in range(8):
             for col in range(8):
-                if (row + col) % 2 != 0:
+                if (row + col) % 2 != player_values.index(self.player_color):
                     self.draw_square(col * self.square_size, row * self.square_size, self.square_size, colours['blue'])
         for row in range(1, 9):
             for col in range(1, 9):
@@ -113,7 +122,6 @@ class GameInstance:
         :return: the piece at the coordinates if it exists, otherwise None
         """
         mouse_x, mouse_y = coordinates
-        print(clicked_piece)
         current_clicked_piece = self.check_piece_click(mouse_x, mouse_y)
         if current_clicked_piece:
             if (clicked_piece and clicked_piece.color == current_clicked_piece.color) or not clicked_piece:
@@ -124,8 +132,6 @@ class GameInstance:
                 possible_moves = clicked_piece.get_possible_moves(self.board_state)
                 row = int(mouse_y // self.square_size) + 1
                 col = int(mouse_x // self.square_size) + 1
-                print(row, col)
-                print(possible_moves)
                 for x, y in possible_moves:
                     if row == x and col == y:
                         px, py = clicked_piece.board_position
@@ -134,27 +140,77 @@ class GameInstance:
                         clicked_piece.board_position = (row, col)
                         self.screen.fill((colours['white']))
                         self.draw_chessboard()
-                        return None
+                        return tuple([clicked_piece, px, py, row, col])
         clicked_piece = self.check_piece_click(mouse_x, mouse_y)
         if clicked_piece:
             self.draw_possible_moves(clicked_piece.get_possible_moves(self.board_state))
         return clicked_piece
 
-    def run_game(self):
+    def invert_coordinates(self, xs, ys, xd, yd):
+        """
+        Inverts received coordinates to match with board
+        :param xs: row of initial placement of piece
+        :param ys: column of initial placement of piece
+        :param xd: row of new placement of piece
+        :param yd: column of new placement of piece
+        :return: inverted coordinates
+        """
+        xs = 8 - xs + 1
+        xd = 8 - xd + 1
+        ys = 8 - ys + 1
+        yd = 8 - yd + 1
+        return xs, ys, xd, yd
+
+    def run_game(self, s):
         """
         Main Loop of the Game
         """
         running = True
         clicked_piece = None
+        move_0 = True
         while running:
+            if self.player_color == 'black' and move_0 is True:
+                data = s.recv(1024)
+                unpickled = pickle.loads(data)
+                print(unpickled)
+                move_0 = False
+                ph, px, py, row, col = unpickled
+                px, py, row, col = self.invert_coordinates(px, py, row, col)
+                moved_piece = self.board_state[px][py]
+                self.board_state[row][col] = self.board_state[px][py]
+                self.board_state[px][py] = None
+                moved_piece.board_position = (row, col)
+                self.screen.fill((colours['white']))
+                self.draw_chessboard()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     clicked_piece = self.handle_click(pygame.mouse.get_pos(), clicked_piece)
+            if isinstance(clicked_piece, tuple):
+                data = pickle.dumps(clicked_piece)
+                s.sendall(data)
+                data = s.recv(1024)
+                unpickled = pickle.loads(data)
+                print('Received Data:')
+                print(unpickled)
+                ph, px, py, row, col = unpickled
+                px, py, row, col = self.invert_coordinates(px, py, row, col)
+                moved_piece = self.board_state[px][py]
+                self.board_state[row][col] = self.board_state[px][py]
+                self.board_state[px][py] = None
+                moved_piece.board_position = (row, col)
+                self.screen.fill((colours['white']))
+                self.draw_chessboard()
+                clicked_piece = None
         pygame.quit()
 
 
 if __name__ == '__main__':
-    game_instance = GameInstance(960)
-    game_instance.run_game()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        color = s.recv(1024)
+        color = pickle.loads(color)
+        print(color)
+        game_instance = GameInstance(960, color)
+        game_instance.run_game(s)

@@ -1,10 +1,13 @@
-import pygame
-
 color_values = {'black': 1, 'white': -1}
+
+def rev_values(player_color):
+    if player_color == 'black':
+        color_values['black'] = -1
+        color_values['white'] = 1
 
 
 class Piece():
-    def __init__(self, color, image, board_position):
+    def __init__(self, color, image, board_position, player_color):
         """
         Initializes a Piece Object
         :param color: color of the piece (can be black or white)
@@ -14,6 +17,7 @@ class Piece():
         self.color = color
         self.image = image
         self.board_position = board_position
+        rev_values(player_color)
 
     def get_possible_moves(self, board_state):
         """
@@ -25,8 +29,8 @@ class Piece():
 
 
 class King(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -44,8 +48,8 @@ class King(Piece):
 
 
 class Queen(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -68,8 +72,8 @@ class Queen(Piece):
 
 
 class Bishop(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -92,8 +96,8 @@ class Bishop(Piece):
 
 
 class Knight(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -111,8 +115,8 @@ class Knight(Piece):
 
 
 class Rook(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -138,8 +142,8 @@ class Rook(Piece):
 
 
 class Pawn(Piece):
-    def __init__(self, color, image, board_position):
-        super().__init__(color, image, board_position)
+    def __init__(self, color, image, board_position, player_color):
+        super().__init__(color, image, board_position, player_color)
         self.initial_position = board_position
 
     def get_possible_moves(self, board_state):
