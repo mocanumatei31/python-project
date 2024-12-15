@@ -123,10 +123,9 @@ class GameInstance:
         """
         mouse_x, mouse_y = coordinates
         current_clicked_piece = self.check_piece_click(mouse_x, mouse_y)
-        if current_clicked_piece:
-            if (clicked_piece and clicked_piece.color == current_clicked_piece.color) or not clicked_piece:
-                self.screen.fill((colours['white']))
-                self.draw_chessboard()
+        if current_clicked_piece and ((clicked_piece and clicked_piece.color == current_clicked_piece.color) or not clicked_piece):
+            self.screen.fill((colours['white']))
+            self.draw_chessboard()
         else:
             if clicked_piece:
                 possible_moves = clicked_piece.get_possible_moves(self.board_state)
