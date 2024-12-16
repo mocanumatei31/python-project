@@ -1,3 +1,6 @@
+import copy
+import sys
+
 import pygame
 import pieces
 import socket
@@ -139,7 +142,8 @@ class GameInstance:
                         clicked_piece.board_position = (row, col)
                         self.screen.fill((colours['white']))
                         self.draw_chessboard()
-                        return tuple([clicked_piece, px, py, row, col])
+                        sent_board = copy.deepcopy(self.board_state)
+                        return tuple([sent_board, px, py, row, col])
         clicked_piece = self.check_piece_click(mouse_x, mouse_y)
         if clicked_piece:
             if clicked_piece.color == self.player_color:
@@ -173,11 +177,11 @@ class GameInstance:
         move_0 = True
         while running:
             if self.player_color == 'black' and move_0 is True:
-                data = s.recv(1024)
+                data = s.recv(4096)
                 unpickled = pickle.loads(data)
                 print(unpickled)
                 move_0 = False
-                ph, px, py, row, col = unpickled
+                received_board, px, py, row, col = unpickled
                 px, py, row, col = self.invert_coordinates(px, py, row, col)
                 moved_piece = self.board_state[px][py]
                 self.board_state[row][col] = self.board_state[px][py]
@@ -193,19 +197,22 @@ class GameInstance:
             if isinstance(clicked_piece, tuple):
                 data = pickle.dumps(clicked_piece)
                 s.sendall(data)
-                data = s.recv(1024)
+                data = s.recv(4096)
                 unpickled = pickle.loads(data)
                 print('Received Data:')
                 print(unpickled)
-                ph, px, py, row, col = unpickled
-                px, py, row, col = self.invert_coordinates(px, py, row, col)
-                moved_piece = self.board_state[px][py]
-                self.board_state[row][col] = self.board_state[px][py]
-                self.board_state[px][py] = None
-                moved_piece.board_position = (row, col)
-                self.screen.fill((colours['white']))
-                self.draw_chessboard()
-                clicked_piece = None
+                if isinstance(unpickled, int):
+                    running = False
+                else:
+                    received_board, px, py, row, col = unpickled
+                    px, py, row, col = self.invert_coordinates(px, py, row, col)
+                    moved_piece = self.board_state[px][py]
+                    self.board_state[row][col] = self.board_state[px][py]
+                    self.board_state[px][py] = None
+                    moved_piece.board_position = (row, col)
+                    self.screen.fill((colours['white']))
+                    self.draw_chessboard()
+                    clicked_piece = None
         pygame.quit()
 
 
