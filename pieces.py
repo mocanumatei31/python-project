@@ -1,4 +1,7 @@
+import logic_helper as lh
+
 color_values = {'black': 1, 'white': -1}
+
 
 def rev_values(player_color):
     if player_color == 'black':
@@ -6,7 +9,7 @@ def rev_values(player_color):
         color_values['white'] = 1
 
 
-class Piece():
+class Piece:
     def __init__(self, color, image, board_position, player_color):
         """
         Initializes a Piece Object
@@ -39,11 +42,19 @@ class King(Piece):
             row, col = self.board_position
             row += dr
             col += dc
+            move = tuple([self.board_position[0], self.board_position[1], row, col])
             if 1 <= row <= 8 and 1 <= col <= 8:
+                if color_values[self.color] == -1:
+                    print(row, col, lh.check_if_move_blocks_check(board_state, self.color, move))
                 if board_state[row][col] is None:
-                    moves.append((row, col))
-                elif board_state[row][col].color != self.color:
-                    moves.append((row, col))
+                    if (color_values[self.color] == 1 or
+                            lh.check_if_move_blocks_check(board_state, self.color, move)):
+                        moves.append((row, col))
+                else:
+                    if board_state[row][col].color != self.color:
+                        if (color_values[self.color] == 1 or
+                                lh.check_if_move_blocks_check(board_state, self.color, move)):
+                            moves.append((row, col))
         return moves
 
 
@@ -59,12 +70,17 @@ class Queen(Piece):
             while True:
                 row += dr
                 col += dc
+                move = tuple([self.board_position[0], self.board_position[1], row, col])
                 if 1 <= row <= 8 and 1 <= col <= 8:
                     if board_state[row][col] is None:
-                        moves.append((row, col))
+                        if (color_values[self.color] == 1 or
+                                lh.check_if_move_blocks_check(board_state, self.color, move)):
+                            moves.append((row, col))
                     else:
                         if board_state[row][col].color != self.color:
-                            moves.append((row, col))
+                            if (color_values[self.color] == 1 or
+                                    lh.check_if_move_blocks_check(board_state, self.color, move)):
+                                moves.append((row, col))
                         break
                 else:
                     break
@@ -83,12 +99,17 @@ class Bishop(Piece):
             while True:
                 row += dr
                 col += dc
+                move = tuple([self.board_position[0], self.board_position[1], row, col])
                 if 1 <= row <= 8 and 1 <= col <= 8:
                     if board_state[row][col] is None:
-                        moves.append((row, col))
+                        if (color_values[self.color] == 1 or
+                                lh.check_if_move_blocks_check(board_state, self.color, move)):
+                            moves.append((row, col))
                     else:
                         if board_state[row][col].color != self.color:
-                            moves.append((row, col))
+                            if (color_values[self.color] == 1 or
+                                    lh.check_if_move_blocks_check(board_state, self.color, move)):
+                                moves.append((row, col))
                         break
                 else:
                     break
@@ -106,11 +127,15 @@ class Knight(Piece):
             row, col = self.board_position
             row += dr
             col += dc
+            move = tuple([self.board_position[0], self.board_position[1], row, col])
             if 1 <= row <= 8 and 1 <= col <= 8:
                 if board_state[row][col] is None:
-                    moves.append((row, col))
+                    if (color_values[self.color] == 1 or
+                            lh.check_if_move_blocks_check(board_state, self.color, move)):
+                        moves.append((row, col))
                 elif board_state[row][col].color != self.color:
-                    moves.append((row, col))
+                    if color_values[self.color] == 1 or lh.check_if_move_blocks_check(board_state, self.color, move):
+                        moves.append((row, col))
         return moves
 
 
@@ -126,18 +151,20 @@ class Rook(Piece):
             while True:
                 row += dr
                 col += dc
+                move = tuple([self.board_position[0], self.board_position[1], row, col])
                 if 1 <= row <= 8 and 1 <= col <= 8:
                     if board_state[row][col] is None:
-                        moves.append((row, col))
+                        if (color_values[self.color] == 1 or
+                                lh.check_if_move_blocks_check(board_state, self.color, move)):
+                            moves.append((row, col))
                     else:
                         if board_state[row][col].color != self.color:
-                            moves.append((row, col))
+                            if (color_values[self.color] == 1 or
+                                    lh.check_if_move_blocks_check(board_state, self.color, move)):
+                                moves.append((row, col))
                         break
                 else:
                     break
-        print(moves)
-        if len(moves) == 0:
-            self.kill()
         return moves
 
 
@@ -151,12 +178,22 @@ class Pawn(Piece):
         row, col = self.board_position
         new_row = row + (1 * color_values[self.color])
         for i in range(-1, 2, 2):
-            if (1 <= col + i <= 8 and board_state[new_row][col + i] is not None
-                    and board_state[new_row][col + i].color != self.color):
+            move = tuple([self.board_position[0], self.board_position[1], new_row, col + i])
+            if ((1 <= col + i <= 8 and board_state[new_row][col + i] is not None
+                 and board_state[new_row][col + i].color != self.color) and
+                    (color_values[self.color] == 1 or
+                     lh.check_if_move_blocks_check(board_state, self.color, move))):
                 moves.append(tuple([new_row, col + i]))
         if board_state[new_row][col] is None:
-            moves.append(tuple([new_row, col]))
-            if (self.board_position == self.initial_position and
-                    board_state[new_row + (1 * color_values[self.color])][col] is None):
+            move = tuple([self.board_position[0], self.board_position[1], new_row, col])
+            if (color_values[self.color] == 1 or
+                    lh.check_if_move_blocks_check(board_state, self.color, move)):
+                moves.append(tuple([new_row, col]))
+            move = tuple(
+                [self.board_position[0], self.board_position[1], new_row + (1 * color_values[self.color]), col])
+            if ((self.board_position == self.initial_position and
+                 board_state[new_row + (1 * color_values[self.color])][col] is None)
+                    and (color_values[self.color] == 1 or
+                         lh.check_if_move_blocks_check(board_state, self.color, move))):
                 moves.append(tuple([new_row + (1 * color_values[self.color]), col]))
         return moves

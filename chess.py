@@ -64,9 +64,9 @@ class GameInstance:
                         self.board_state[row][col] = pieces.Knight(color, f"assets/{image_path}n.png", (row, col), self.player_color)
                     elif col == 3 or col == 6:
                         self.board_state[row][col] = pieces.Bishop(color, f"assets/{image_path}b.png", (row, col), self.player_color)
-                    elif col == 4:
+                    elif (col == 4 and self.player_color == 'white') or (col == 5 and self.player_color == 'black'):
                         self.board_state[row][col] = pieces.Queen(color, f"assets/{image_path}q.png", (row, col), self.player_color)
-                    else:
+                    elif (col == 5 and self.player_color == 'white') or (col == 4 and self.player_color == 'black'):
                         self.board_state[row][col] = pieces.King(color, f"assets/{image_path}k.png", (row, col), self.player_color)
                 elif row == 2 or row == 7:
                     self.board_state[row][col] = pieces.Pawn(color, f"assets/{image_path}p.png", (row, col), self.player_color)
@@ -142,7 +142,10 @@ class GameInstance:
                         return tuple([clicked_piece, px, py, row, col])
         clicked_piece = self.check_piece_click(mouse_x, mouse_y)
         if clicked_piece:
-            self.draw_possible_moves(clicked_piece.get_possible_moves(self.board_state))
+            if clicked_piece.color == self.player_color:
+                self.draw_possible_moves(clicked_piece.get_possible_moves(self.board_state))
+            else:
+                clicked_piece = None
         return clicked_piece
 
     def invert_coordinates(self, xs, ys, xd, yd):
@@ -163,6 +166,7 @@ class GameInstance:
     def run_game(self, s):
         """
         Main Loop of the Game
+        :param s: socket used for communication
         """
         running = True
         clicked_piece = None
