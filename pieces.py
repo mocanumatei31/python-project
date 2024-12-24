@@ -12,6 +12,7 @@ class Piece:
         self.color = color
         self.image = image
         self.board_position = board_position
+        self.has_moved = False
         self.color_values = {'black': 1, 'white': -1}
         self.rev_values(player_color)
 
@@ -28,10 +29,18 @@ class Piece:
         """
         pass
 
+    def move(self, row, col, board_state):
+        px, py = self.board_position
+        board_state[row][col] = self
+        board_state[px][py] = None
+        self.board_position = (row, col)
+        self.has_moved = True
+
 
 class King(Piece):
     def __init__(self, color, image, board_position, player_color):
         super().__init__(color, image, board_position, player_color)
+        self.initial_position = board_position
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -42,8 +51,6 @@ class King(Piece):
             col += dc
             move = tuple([self.board_position[0], self.board_position[1], row, col])
             if 1 <= row <= 8 and 1 <= col <= 8:
-                if self.color_values[self.color] == -1:
-                    print(row, col, lh.check_if_move_blocks_check(board_state, self.color, move))
                 if board_state[row][col] is None:
                     if (self.color_values[self.color] == 1 or
                             lh.check_if_move_blocks_check(board_state, self.color, move)):
@@ -53,7 +60,50 @@ class King(Piece):
                         if (self.color_values[self.color] == 1 or
                                 lh.check_if_move_blocks_check(board_state, self.color, move)):
                             moves.append((row, col))
+        if not self.has_moved:
+            for dr, dc in [(0, 1), (0, -1)]:
+                row, col = self.board_position
+                while True:
+                    row += dr
+                    col += dc
+                    if 1 <= row <= 8 and 1 <= col <= 8:
+                        if board_state[row][col] is not None:
+                            if (board_state[row][col].color == self.color and
+                                    isinstance(board_state[row][col], Rook) and not board_state[row][col].has_moved):
+                                move = tuple([self.board_position[0], self.board_position[1], row, col - dc])
+                                if (self.color_values[self.color] == 1 or
+                                        lh.check_if_move_blocks_check(board_state, self.color, move)):
+                                    moves.append((row, col - dc))
+                            else:
+                                break
+                    else:
+                        break
         return moves
+
+    def move(self, row, col, board_state):
+        px, py = self.board_position
+        if abs(col - py) == 2:
+            rook = None
+            if col > py:
+                rook = board_state[row][col + 1]
+                rook.move(row, col - 1, board_state)
+            else:
+                rook = board_state[row][col - 1]
+                rook.move(row, col + 1, board_state)
+        elif abs(col - py) == 3:
+            rook = None
+            if col > py:
+                rook = board_state[row][col + 1]
+                rook.move(row, col - 2, board_state)
+                col -= 1
+            else:
+                rook = board_state[row][col - 1]
+                rook.move(row, col + 2, board_state)
+                col += 1
+        board_state[row][col] = self
+        board_state[px][py] = None
+        self.board_position = (row, col)
+        self.has_moved = True
 
 
 class Queen(Piece):
@@ -132,7 +182,8 @@ class Knight(Piece):
                             lh.check_if_move_blocks_check(board_state, self.color, move)):
                         moves.append((row, col))
                 elif board_state[row][col].color != self.color:
-                    if self.color_values[self.color] == 1 or lh.check_if_move_blocks_check(board_state, self.color, move):
+                    if self.color_values[self.color] == 1 or lh.check_if_move_blocks_check(board_state, self.color,
+                                                                                           move):
                         moves.append((row, col))
         return moves
 
@@ -140,6 +191,7 @@ class Knight(Piece):
 class Rook(Piece):
     def __init__(self, color, image, board_position, player_color):
         super().__init__(color, image, board_position, player_color)
+        self.initial_position = board_position
 
     def get_possible_moves(self, board_state):
         moves = list()

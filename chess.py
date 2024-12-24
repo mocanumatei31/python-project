@@ -137,9 +137,7 @@ class GameInstance:
                 for x, y in possible_moves:
                     if row == x and col == y:
                         px, py = clicked_piece.board_position
-                        self.board_state[row][col] = clicked_piece
-                        self.board_state[px][py] = None
-                        clicked_piece.board_position = (row, col)
+                        clicked_piece.move(row, col, self.board_state)
                         self.screen.fill((colours['white']))
                         self.draw_chessboard()
                         sent_board = copy.deepcopy(self.board_state)
