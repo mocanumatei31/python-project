@@ -44,5 +44,6 @@ def get_available_moves(board, color):
         for j in range(1, 9):
             if isinstance(board[i][j], pieces.Piece) and board[i][j].color == color:
                 print(i, j, board[i][j].get_possible_moves(board))
-                moves.extend(board[i][j].get_possible_moves(board))
+                for x, y in board[i][j].get_possible_moves(board):
+                    moves.append(tuple([i, j, x, y]))
     return moves
