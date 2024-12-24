@@ -207,39 +207,3 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         else:
             client_thread1 = threading.Thread(target=handle_client_v_computer, args=(conn, addr))
             client_thread1.start()
-
-
-
-    def generate_initial_board(self):
-        """
-        Generates the board state according to initial configuration of a chess game
-        """
-        for row in range(9):
-            for col in range(9):
-                if 0 < row <= 2:
-                    color = [x for x in player_values if x != self.player_color][0]
-                    image_path = color[0]
-                elif row > 6:
-                    color = self.player_color
-                    image_path = color[0]
-                else:
-                    color = None
-                if row == 1 or row == 8:
-                    if col == 1 or col == 8:
-                        self.board_state[row][col] = pieces.Rook(color, f"assets/{image_path}r.png", (row, col),
-                                                                 self.player_color)
-                    elif col == 2 or col == 7:
-                        self.board_state[row][col] = pieces.Knight(color, f"assets/{image_path}n.png", (row, col),
-                                                                   self.player_color)
-                    elif col == 3 or col == 6:
-                        self.board_state[row][col] = pieces.Bishop(color, f"assets/{image_path}b.png", (row, col),
-                                                                   self.player_color)
-                    elif (col == 4 and self.player_color == 'white') or (col == 5 and self.player_color == 'black'):
-                        self.board_state[row][col] = pieces.Queen(color, f"assets/{image_path}q.png", (row, col),
-                                                                  self.player_color)
-                    elif (col == 5 and self.player_color == 'white') or (col == 4 and self.player_color == 'black'):
-                        self.board_state[row][col] = pieces.King(color, f"assets/{image_path}k.png", (row, col),
-                                                                 self.player_color)
-                elif row == 2 or row == 7:
-                    self.board_state[row][col] = pieces.Pawn(color, f"assets/{image_path}p.png", (row, col),
-                                                             self.player_color)
