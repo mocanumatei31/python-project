@@ -205,9 +205,7 @@ class GameInstance:
                     received_board, px, py, row, col = unpickled
                     px, py, row, col = self.invert_coordinates(px, py, row, col)
                     moved_piece = self.board_state[px][py]
-                    self.board_state[row][col] = self.board_state[px][py]
-                    self.board_state[px][py] = None
-                    moved_piece.board_position = (row, col)
+                    moved_piece.move(row, col, self.board_state)
                     self.screen.fill((colours['white']))
                     self.draw_chessboard()
                     clicked_piece = None

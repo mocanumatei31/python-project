@@ -1,4 +1,5 @@
 import logic_helper as lh
+import random
 
 
 class Piece:
@@ -14,6 +15,7 @@ class Piece:
         self.board_position = board_position
         self.has_moved = False
         self.color_values = {'black': 1, 'white': -1}
+        self.player_color = player_color
         self.rev_values(player_color)
 
     def rev_values(self, player_color):
@@ -247,3 +249,18 @@ class Pawn(Piece):
                          lh.check_if_move_blocks_check(board_state, self.color, move))):
                 moves.append(tuple([new_row + (1 * self.color_values[self.color]), col]))
         return moves
+
+    def move(self, row, col, board_state):
+        px, py = self.board_position
+        board_state[row][col] = self
+        board_state[px][py] = None
+        self.board_position = (row, col)
+        if row == 1 or row == 8:
+            image_path = self.color[0]
+            possible_choices = [Queen(self.color, f"assets/{image_path}q.png", self.board_position, self.player_color),
+                                Rook(self.color, f"assets/{image_path}r.png", self.board_position, self.player_color),
+                                Bishop(self.color, f"assets/{image_path}b.png", self.board_position, self.player_color),
+                                Knight(self.color, f"assets/{image_path}n.png", self.board_position, self.player_color)]
+            rand = random.randint(0, 3)
+            board_state[row][col] = possible_choices[rand]
+        self.has_moved = True

@@ -47,3 +47,4 @@ def get_available_moves(board, color):
                 for x, y in board[i][j].get_possible_moves(board):
                     moves.append(tuple([i, j, x, y]))
     return moves
+
