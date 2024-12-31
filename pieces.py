@@ -224,6 +224,7 @@ class Pawn(Piece):
     def __init__(self, color, image, board_position, player_color):
         super().__init__(color, image, board_position, player_color)
         self.initial_position = board_position
+        self.en_passantable = False
 
     def get_possible_moves(self, board_state):
         moves = list()
@@ -248,10 +249,18 @@ class Pawn(Piece):
                     and (self.color_values[self.color] == 1 or
                          lh.check_if_move_blocks_check(board_state, self.color, move))):
                 moves.append(tuple([new_row + (1 * self.color_values[self.color]), col]))
+        for i in (-1, 1):
+            if 1 <= col + i <= 8 and isinstance(board_state[row][col + i], Pawn) and board_state[row][col + i].en_passantable:
+                move = tuple([self.board_position[0], self.board_position[1], new_row, col + i])
+                if (self.color_values[self.color] == 1 or
+                        lh.check_if_move_blocks_check(board_state, self.color, move)):
+                    moves.append(tuple([new_row, col + i]))
         return moves
 
     def move(self, row, col, board_state):
         px, py = self.board_position
+        if row != px and col != py and board_state[row][col] is None:
+            board_state[px][col] = None
         board_state[row][col] = self
         board_state[px][py] = None
         self.board_position = (row, col)
@@ -263,4 +272,6 @@ class Pawn(Piece):
                                 Knight(self.color, f"assets/{image_path}n.png", self.board_position, self.player_color)]
             rand = random.randint(0, 3)
             board_state[row][col] = possible_choices[rand]
+        if abs(row - px) == 2:
+            self.en_passantable = True
         self.has_moved = True

@@ -204,6 +204,10 @@ class GameInstance:
                 else:
                     received_board, px, py, row, col = unpickled
                     px, py, row, col = self.invert_coordinates(px, py, row, col)
+                    for i in range(1, 9):
+                        for j in range(1, 9):
+                            if isinstance(self.board_state[i][j], pieces.Pawn):
+                                self.board_state[i][j].en_passantable = False
                     moved_piece = self.board_state[px][py]
                     moved_piece.move(row, col, self.board_state)
                     self.screen.fill((colours['white']))
