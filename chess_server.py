@@ -36,33 +36,41 @@ def handle_client(conn, addr, game):
                     break
                 received_tuple = pickle.loads(data)
                 print(f"Received tuple from {addr}: {received_tuple}")
-                board = received_tuple[0]
-                rev_board = [[None] * 9 for _ in range(9)]
-                for i in range(1, 9):
-                    for j in range(1, 9):
-                        rev_board[i][j] = board[8 - i + 1][8 - j + 1]
-                        if isinstance(rev_board[i][j], pieces.Piece):
-                            rev_board[i][j].board_position = (i, j)
-                            if rev_board[i][j].color_values['black'] == -1:
-                                rev_board[i][j].color_values['black'] = 1
-                                rev_board[i][j].color_values['white'] = -1
+                if isinstance(received_tuple, tuple):
+                    board = received_tuple[0]
+                    rev_board = [[None] * 9 for _ in range(9)]
+                    for i in range(1, 9):
+                        for j in range(1, 9):
+                            rev_board[i][j] = board[8 - i + 1][8 - j + 1]
+                            if isinstance(rev_board[i][j], pieces.Piece):
+                                rev_board[i][j].board_position = (i, j)
+                                if rev_board[i][j].color_values['black'] == -1:
+                                    rev_board[i][j].color_values['black'] = 1
+                                    rev_board[i][j].color_values['white'] = -1
+                                else:
+                                    rev_board[i][j].color_values['black'] = -1
+                                    rev_board[i][j].color_values['white'] = 1
+                    if len(lh.get_available_moves(rev_board, colors[1 - turn])) == 0:
+                        for client in games[game]:
+                            if client != conn:
+                                client.sendall(pickle.dumps(0))
+                                received_tuple = None
                             else:
-                                rev_board[i][j].color_values['black'] = -1
-                                rev_board[i][j].color_values['white'] = 1
-                if len(lh.get_available_moves(rev_board, colors[1 - turn])) == 0:
+                                client.sendall(pickle.dumps(1))
+                        games[game] = 0
+                        break
                     for client in games[game]:
                         if client != conn:
-                            client.sendall(pickle.dumps(0))
+                            client.sendall(pickle.dumps(received_tuple))
                             received_tuple = None
-                        else:
+                    turn = 1 - turn
+                else:
+                    for client in games[game]:
+                        if client != conn:
                             client.sendall(pickle.dumps(1))
+                            received_tuple = None
                     games[game] = 0
                     break
-                for client in games[game]:
-                    if client != conn:
-                        client.sendall(pickle.dumps(received_tuple))
-                        received_tuple = None
-                turn = 1 - turn
     except ConnectionResetError:
         print(111)
         read_sockets, _, _ = select.select(games[game], [], [])

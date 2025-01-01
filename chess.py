@@ -189,6 +189,7 @@ class GameInstance:
                 self.draw_chessboard()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    s.sendall(pickle.dumps(0))
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     clicked_piece = self.handle_click(pygame.mouse.get_pos(), clicked_piece)
@@ -200,6 +201,24 @@ class GameInstance:
                 print('Received Data:')
                 print(unpickled)
                 if isinstance(unpickled, int):
+                    font = pygame.font.Font(None, 50)
+                    if unpickled == 1:
+                        text = font.render("You Win!", True, colours['white'])
+                    else:
+                        text = font.render("You Lose!", True, colours['white'])
+                    text_rect = text.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
+                    self.screen.fill((0, 0, 0))
+                    self.screen.blit(text, text_rect)
+                    pygame.display.flip()
+                    waiting = True
+                    while waiting:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            if event.type == pygame.KEYDOWN:
+                                waiting = False
+                                break
                     running = False
                 else:
                     received_board, px, py, row, col = unpickled
