@@ -39,12 +39,76 @@ def check_if_move_blocks_check(board, color, move):
 
 
 def get_available_moves(board, color):
+    """
+    Gets all legal moves that a player of a certain color can make
+    :param board: the state of the board
+    :param color: the color of the player
+    :return: the list of moves that can be made in the form of 4-tuples
+    """
     moves = list()
     for i in range(1, 9):
         for j in range(1, 9):
             if isinstance(board[i][j], pieces.Piece) and board[i][j].color == color:
-                print(i, j, board[i][j].get_possible_moves(board))
                 for x, y in board[i][j].get_possible_moves(board):
                     moves.append(tuple([i, j, x, y]))
     return moves
 
+
+def is_king_under_attack(board, color):
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    king_position = None
+    for i in range(1, 9):
+        for j in range(1, 9):
+            if isinstance(board[i][j], pieces.King) and board[i][j].color == color:
+                king_position = i, j
+    for dr, dc in directions:
+        row, col = king_position
+        while True:
+            row += dr
+            col += dc
+            if 1 <= row <= 8 and 1 <= col <= 8:
+                if board[row][col] is not None:
+                    if board[row][col].color != color and (isinstance(board[row][col], pieces.Queen) or
+                                                           isinstance(board[row][col], pieces.Rook)):
+                        return True
+                    else:
+                        break
+            else:
+                break
+    directions = [(1, 1), (-1, 1), (1, -1), (-1, -1)]
+    for dr, dc in directions:
+        row, col = king_position
+        while True:
+            row += dr
+            col += dc
+            if 1 <= row <= 8 and 1 <= col <= 8:
+                if board[row][col] is not None:
+                    if board[row][col].color != color and (isinstance(board[row][col], pieces.Queen) or
+                                                           isinstance(board[row][col], pieces.Bishop)):
+                        return True
+                    else:
+                        break
+            else:
+                break
+    directions = [(1, 2), (1, -2), (2, 1), (2, -1), (-1, 2), (-1, -2), (-2, -1), (-2, 1)]
+    for dr, dc in directions:
+        row, col = king_position
+        row += dr
+        col += dc
+        if 1 <= row <= 8 and 1 <= col <= 8:
+            if board[row][col] is not None:
+                if board[row][col].color != color and isinstance(board[row][col], pieces.Knight):
+                    return True
+                else:
+                    break
+        else:
+            break
+    for dr, dc in [(-1, 1), (-1, -1)]:
+        row, col = king_position
+        row += dr
+        col += dc
+        if 1 <= row <= 8 and 1 <= col <= 8:
+            if board[row][col] is not None:
+                if board[row][col].color != color and isinstance(board[row][col], pieces.Pawn):
+                    return True
+    return False

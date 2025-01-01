@@ -204,6 +204,8 @@ class GameInstance:
                     font = pygame.font.Font(None, 50)
                     if unpickled == 1:
                         text = font.render("You Win!", True, colours['white'])
+                    elif unpickled == 0:
+                        text = font.render("Draw!", True, colours['white'])
                     else:
                         text = font.render("You Lose!", True, colours['white'])
                     text_rect = text.get_rect(center=(self.screen_width // 2, self.screen_height // 2))

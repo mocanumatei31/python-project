@@ -18,6 +18,12 @@ games = list()
 
 
 def handle_client(conn, addr, game):
+    """
+    Handles the moves sent in by a client in a pvp game
+    :param conn: the connected socket corresponding to the player
+    :param addr: player's address
+    :param game: id of the played game
+    """
     global turn
     print('Connected by', addr)
     color = None
@@ -50,13 +56,22 @@ def handle_client(conn, addr, game):
                                 else:
                                     rev_board[i][j].color_values['black'] = -1
                                     rev_board[i][j].color_values['white'] = 1
+                    print(color)
                     if len(lh.get_available_moves(rev_board, colors[1 - turn])) == 0:
-                        for client in games[game]:
-                            if client != conn:
-                                client.sendall(pickle.dumps(0))
-                                received_tuple = None
-                            else:
-                                client.sendall(pickle.dumps(1))
+                        if lh.is_king_in_check(rev_board, colors[1 - turn]):
+                            for client in games[game]:
+                                if client != conn:
+                                    client.sendall(pickle.dumps(-1))
+                                    received_tuple = None
+                                else:
+                                    client.sendall(pickle.dumps(1))
+                        else:
+                            for client in games[game]:
+                                if client != conn:
+                                    client.sendall(pickle.dumps(0))
+                                    received_tuple = None
+                                else:
+                                    client.sendall(pickle.dumps(0))
                         games[game] = 0
                         break
                     for client in games[game]:
@@ -89,6 +104,11 @@ def handle_client(conn, addr, game):
 
 
 def handle_client_v_computer(conn, addr):
+    """
+    Handles the moves sent in by a client in a pvc game
+    :param conn: :param conn: the connected socket corresponding to the player
+    :param addr: player's address
+    """
     print('Connected by', addr)
     color = None
     comp_color = None
@@ -125,7 +145,10 @@ def handle_client_v_computer(conn, addr):
                             rev_board[i][j].color_values['black'] = -1
                             rev_board[i][j].color_values['white'] = 1
             if len(lh.get_available_moves(rev_board, comp_color)) == 0:
-                conn.sendall(pickle.dumps(1))
+                if lh.is_king_under_attack(rev_board, comp_color):
+                    conn.sendall(pickle.dumps(1))
+                else:
+                    conn.sendall(pickle.dumps(0))
                 break
         if rev_board is None:
             rev_board = generate_initial_board(comp_color)
@@ -146,8 +169,11 @@ def handle_client_v_computer(conn, addr):
                     else:
                         rev_board[i][j].color_values['black'] = -1
                         rev_board[i][j].color_values['white'] = 1
-        if len(lh.get_available_moves(rev_board, comp_color)) == 0:
-            conn.sendall(pickle.dumps(1))
+        if len(lh.get_available_moves(rev_board, color)) == 0:
+            if lh.is_king_under_attack(rev_board, color):
+                conn.sendall(pickle.dumps(1))
+            else:
+                conn.sendall(pickle.dumps(0))
             break
         received_tuple = [rev_board]
         received_tuple.extend(move)
