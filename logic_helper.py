@@ -55,6 +55,12 @@ def get_available_moves(board, color):
 
 
 def is_king_under_attack(board, color):
+    """
+    Checks if King is Attacked By any Piece
+    :param board: state of the board
+    :param color: the color of the king
+    :return: True if Under Attack, False Otherwise
+    """
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     king_position = None
     for i in range(1, 9):

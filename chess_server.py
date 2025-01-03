@@ -228,6 +228,11 @@ def generate_initial_board(comp_color):
 
 
 def insufficient_material(board):
+    """
+    Checks for Insufficient Material Draw
+    :param board: State of the Board
+    :return: True if Draw State, False Otherwise
+    """
     white_pieces = {}
     black_pieces = {}
     coefficient = {}

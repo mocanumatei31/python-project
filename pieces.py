@@ -19,6 +19,10 @@ class Piece:
         self.rev_values(player_color)
 
     def rev_values(self, player_color):
+        """
+        Reverses movement multiplier if player color is black
+        :param player_color: color of player
+        """
         if player_color == 'black':
             self.color_values['black'] = -1
             self.color_values['white'] = 1
@@ -32,6 +36,13 @@ class Piece:
         pass
 
     def move(self, row, col, board_state, *add_info):
+        """
+        Moves a piece and handles special cases related to the move
+        :param row: the row to which the piece moves
+        :param col: the column to which the piece moves
+        :param board_state: the board state on which the move is made
+        :param add_info: additional information useful to the move
+        """
         px, py = self.board_position
         board_state[row][col] = self
         board_state[px][py] = None
