@@ -230,7 +230,7 @@ class GameInstance:
                             if isinstance(self.board_state[i][j], pieces.Pawn):
                                 self.board_state[i][j].en_passantable = False
                     moved_piece = self.board_state[px][py]
-                    moved_piece.move(row, col, self.board_state)
+                    moved_piece.move(row, col, self.board_state, type(received_board[8 - row + 1][8 - col + 1]))
                     self.screen.fill((colours['white']))
                     self.draw_chessboard()
                     clicked_piece = None

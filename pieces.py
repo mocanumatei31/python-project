@@ -31,7 +31,7 @@ class Piece:
         """
         pass
 
-    def move(self, row, col, board_state):
+    def move(self, row, col, board_state, *add_info):
         px, py = self.board_position
         board_state[row][col] = self
         board_state[px][py] = None
@@ -82,7 +82,7 @@ class King(Piece):
                         break
         return moves
 
-    def move(self, row, col, board_state):
+    def move(self, row, col, board_state, *add_info):
         px, py = self.board_position
         if abs(col - py) == 2:
             rook = None
@@ -250,14 +250,15 @@ class Pawn(Piece):
                          lh.check_if_move_blocks_check(board_state, self.color, move))):
                 moves.append(tuple([new_row + (1 * self.color_values[self.color]), col]))
         for i in (-1, 1):
-            if 1 <= col + i <= 8 and isinstance(board_state[row][col + i], Pawn) and board_state[row][col + i].en_passantable:
+            if 1 <= col + i <= 8 and isinstance(board_state[row][col + i], Pawn) and board_state[row][
+                col + i].en_passantable:
                 move = tuple([self.board_position[0], self.board_position[1], new_row, col + i])
                 if (self.color_values[self.color] == 1 or
                         lh.check_if_move_blocks_check(board_state, self.color, move)):
                     moves.append(tuple([new_row, col + i]))
         return moves
 
-    def move(self, row, col, board_state):
+    def move(self, row, col, board_state, *add_info):
         px, py = self.board_position
         if row != px and col != py and board_state[row][col] is None:
             board_state[px][col] = None
@@ -270,8 +271,13 @@ class Pawn(Piece):
                                 Rook(self.color, f"assets/{image_path}r.png", self.board_position, self.player_color),
                                 Bishop(self.color, f"assets/{image_path}b.png", self.board_position, self.player_color),
                                 Knight(self.color, f"assets/{image_path}n.png", self.board_position, self.player_color)]
-            rand = random.randint(0, 3)
-            board_state[row][col] = possible_choices[rand]
+            if self.color == self.player_color:
+                rand = random.randint(0, 3)
+                board_state[row][col] = possible_choices[rand]
+            else:
+                piece_pos = {Queen: 0, Rook: 1, Bishop: 2, Knight: 3}
+                print("------------", add_info[0], "------------")
+                board_state[row][col] = possible_choices[piece_pos[add_info[0]]]
         if abs(row - px) == 2:
             self.en_passantable = True
         self.has_moved = True

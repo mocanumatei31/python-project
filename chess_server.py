@@ -44,6 +44,15 @@ def handle_client(conn, addr, game):
                 print(f"Received tuple from {addr}: {received_tuple}")
                 if isinstance(received_tuple, tuple):
                     board = received_tuple[0]
+                    if insufficient_material(board):
+                        for client in games[game]:
+                            if client != conn:
+                                client.sendall(pickle.dumps(0))
+                                received_tuple = None
+                            else:
+                                client.sendall(pickle.dumps(0))
+                        games[game] = 0
+                        break
                     rev_board = [[None] * 9 for _ in range(9)]
                     for i in range(1, 9):
                         for j in range(1, 9):
@@ -171,7 +180,7 @@ def handle_client_v_computer(conn, addr):
                         rev_board[i][j].color_values['white'] = 1
         if len(lh.get_available_moves(rev_board, color)) == 0:
             if lh.is_king_under_attack(rev_board, color):
-                conn.sendall(pickle.dumps(1))
+                conn.sendall(pickle.dumps(-1))
             else:
                 conn.sendall(pickle.dumps(0))
             break
@@ -216,6 +225,36 @@ def generate_initial_board(comp_color):
                 board_state[row][col] = pieces.Pawn(color, f"assets/{image_path}p.png", (row, col),
                                                     comp_color)
     return board_state
+
+
+def insufficient_material(board):
+    white_pieces = {}
+    black_pieces = {}
+    coefficient = {}
+    for row in board:
+        for piece in row:
+            if piece is not None:
+                if piece.color == 'white':
+                    white_pieces[type(piece)] = white_pieces.get(type(piece), 0) + 1
+                else:
+                    black_pieces[type(piece)] = black_pieces.get(type(piece), 0) + 1
+    coefficient[pieces.King] = 0
+    coefficient[pieces.Knight] = 1
+    coefficient[pieces.Bishop] = 2
+    coefficient[pieces.Rook] = 3
+    coefficient[pieces.Queen] = 4
+    coefficient[pieces.Pawn] = 5
+    white_score = 0
+    black_score = 0
+    for t in white_pieces.keys():
+        white_score += 2 ** coefficient[t]
+    for t in black_pieces.keys():
+        black_score += 2 ** coefficient[t]
+    if white_score == 1 and (black_score in [1, 3] or (black_score == 5 and black_pieces[pieces.Bishop] == 1)):
+        return True
+    if black_score == 1 and (white_score in [1, 3] or (white_score == 5 and white_pieces[pieces.Bishop] == 1)):
+        return True
+    return False
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
