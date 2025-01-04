@@ -12,7 +12,7 @@ HOST = '127.0.0.1'
 PORT = 8080
 
 clients = list()
-turn = 0
+turn = list()
 colors = ['white', 'black']
 games = list()
 
@@ -24,7 +24,6 @@ def handle_client(conn, addr, game):
     :param addr: player's address
     :param game: id of the played game
     """
-    global turn
     print('Connected by', addr)
     color = None
     if conn == games[game][0]:
@@ -36,7 +35,7 @@ def handle_client(conn, addr, game):
     conn.sendall(data)
     try:
         while isinstance(games[game], list):
-            if colors[turn] == color:
+            if colors[turn[game]] == color:
                 data = conn.recv(4096)
                 if not data:
                     break
@@ -66,8 +65,8 @@ def handle_client(conn, addr, game):
                                     rev_board[i][j].color_values['black'] = -1
                                     rev_board[i][j].color_values['white'] = 1
                     print(color)
-                    if len(lh.get_available_moves(rev_board, colors[1 - turn])) == 0:
-                        if lh.is_king_in_check(rev_board, colors[1 - turn]):
+                    if len(lh.get_available_moves(rev_board, colors[1 - turn[game]])) == 0:
+                        if lh.is_king_in_check(rev_board, colors[1 - turn[game]]):
                             for client in games[game]:
                                 if client != conn:
                                     client.sendall(pickle.dumps(-1))
@@ -87,7 +86,7 @@ def handle_client(conn, addr, game):
                         if client != conn:
                             client.sendall(pickle.dumps(received_tuple))
                             received_tuple = None
-                    turn = 1 - turn
+                    turn[game] = 1 - turn[game]
                 else:
                     for client in games[game]:
                         if client != conn:
@@ -272,11 +271,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         data = pickle.loads(data)
         print(data)
         if data == 'human':
-            if len(games) == 0 or len(games[-1]) == 2:
+            if len(games) == 0 or (isinstance(games[-1], int) or len(games[-1]) == 2):
                 games.append([conn])
             else:
                 games[-1].append(conn)
             if len(games[-1]) == 2:
+                turn.append(0)
                 player1, player2 = games[-1]
                 client_thread1 = threading.Thread(target=handle_client, args=(player1, addr, len(games) - 1))
                 client_thread2 = threading.Thread(target=handle_client, args=(player2, addr, len(games) - 1))

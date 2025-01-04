@@ -240,6 +240,8 @@ class GameInstance:
 if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         game_type = sys.argv[1]
+        if sys.argv[1] not in ['human', 'computer']:
+            exit(0)
         s.connect((HOST, PORT))
         s.sendall(pickle.dumps(game_type))
         color = s.recv(1024)
