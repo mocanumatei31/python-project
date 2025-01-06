@@ -15,6 +15,7 @@ clients = list()
 turn = list()
 colors = ['white', 'black']
 games = list()
+states = list()
 
 
 def handle_client(conn, addr, game):
@@ -52,6 +53,17 @@ def handle_client(conn, addr, game):
                                 client.sendall(pickle.dumps(0))
                         games[game] = 0
                         break
+                    if colors[turn[game]] == 'white':
+                        curr = generate_board_state(board, 'white')
+                        if check_for_repetition(game, curr):
+                            for client in games[game]:
+                                if client != conn:
+                                    client.sendall(pickle.dumps(0))
+                                    received_tuple = None
+                                else:
+                                    client.sendall(pickle.dumps(0))
+                            games[game] = 0
+                            break
                     rev_board = [[None] * 9 for _ in range(9)]
                     for i in range(1, 9):
                         for j in range(1, 9):
@@ -64,7 +76,17 @@ def handle_client(conn, addr, game):
                                 else:
                                     rev_board[i][j].color_values['black'] = -1
                                     rev_board[i][j].color_values['white'] = 1
-                    print(color)
+                    if colors[turn[game]] == 'black':
+                        curr = generate_board_state(board, 'black')
+                        if check_for_repetition(game, curr):
+                            for client in games[game]:
+                                if client != conn:
+                                    client.sendall(pickle.dumps(0))
+                                    received_tuple = None
+                                else:
+                                    client.sendall(pickle.dumps(0))
+                            games[game] = 0
+                            break
                     if len(lh.get_available_moves(rev_board, colors[1 - turn[game]])) == 0:
                         if lh.is_king_in_check(rev_board, colors[1 - turn[game]]):
                             for client in games[game]:
@@ -225,6 +247,35 @@ def generate_initial_board(comp_color):
                                                     comp_color)
     return board_state
 
+def check_for_repetition(game, curr):
+    cnt = 0
+    for state in states[game]:
+        if state == curr:
+            cnt += 1
+        if cnt == 2:
+            return True
+    states[game].append(curr)
+
+def generate_board_state(board, to_move):
+    initials = {pieces.King: 'k', pieces.Queen: 'q', pieces.Rook: 'r', pieces.Knight: 'n', pieces.Pawn: 'p', pieces.Bishop: 'b'}
+    state = ""
+    for i in range(1, 9):
+        cnt = 0
+        for j in range(1, 9):
+            if isinstance(board[i][j], pieces.Piece):
+                if cnt != 0:
+                    state += str(cnt)
+                if board[i][j].color == 'black':
+                    state += initials[type(board[i][j])]
+                else:
+                    state += (initials[type(board[i][j])]).upper()
+            else:
+                cnt += 1
+        if cnt != 0:
+            state += str(cnt)
+        state += '/'
+    state += ' ' + to_move[0]
+    return state
 
 def insufficient_material(board):
     """
@@ -277,6 +328,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 games[-1].append(conn)
             if len(games[-1]) == 2:
                 turn.append(0)
+                states.append([])
                 player1, player2 = games[-1]
                 client_thread1 = threading.Thread(target=handle_client, args=(player1, addr, len(games) - 1))
                 client_thread2 = threading.Thread(target=handle_client, args=(player2, addr, len(games) - 1))
